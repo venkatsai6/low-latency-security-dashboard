@@ -1,3 +1,3 @@
-Low Latency Security Dashboard
+**Low Latency Security Dashboard**
 
 -- Simulating a security monitoring station.
