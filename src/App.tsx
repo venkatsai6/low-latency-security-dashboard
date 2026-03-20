@@ -7,12 +7,13 @@ import { VideoFeed } from './components/VideoFeed';
 const MOCK_CAMERAS = [
   // Stream 1: Mux
   { id: 'CAM-FRONT-DOOR', url: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' },
-  // Stream 2: Unified Streaming
-  { id: 'CAM-LOBBY', url: 'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8' },
+   // Stream 2: Apple Basic Stream
+  { id: 'CAM-SERVER-ROOM', url: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_ts/master.m3u8' }, 
   // Stream 3: Akamai
   { id: 'CAM-PARKING', url: 'https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8' },
-  // Stream 4: Apple Basic Stream
-  { id: 'CAM-SERVER-ROOM', url: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_ts/master.m3u8' }, 
+    // Stream 4: Unified Streaming
+  { id: 'CAM-LOBBY', url: 'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8' },
+ 
 ];
 
 function App() {
