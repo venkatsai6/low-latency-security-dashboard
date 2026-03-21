@@ -6,7 +6,7 @@ export const useEdgeProcessor = (
     isProcessing: boolean
 ) => {
     const [metrics, setMetrics] = useState({ fps: 0, renderTime: 0 });
-    const requestRef = useRef<number>();
+    const requestRef = useRef<number>(0);
     const lastTimeRef = useRef<number>(performance.now());
     const frameCountRef = useRef<number>(0);
 
