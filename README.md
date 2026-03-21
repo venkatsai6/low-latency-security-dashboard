@@ -1,14 +1,15 @@
 # Enterprise Low-Latency Security Dashboard
 
-A high-performance, synchronized video streaming dashboard built to simulate a cloud-managed physical security environment.
+A high-performance, synchronized video streaming dashboard built to simulate a cloud-managed physical security environment. 
 
-This project demonstrates advanced browser resource management, complex state synchronization across multiple media elements, and the utilization of hardware-accelerated Web APIs to handle real-time multimedia data and client-side edge processing.
+This project demonstrates advanced browser resource management, complex state synchronization across multiple media elements, and the utilization of hardware-accelerated Web APIs to handle real-time multimedia data, client-side edge processing, and massive timeline datasets.
 
 ## Key Features
 
 * **Sub-Second Synchronization:** Utilizes delta-time calculations and a centralized Zustand store to keep up to 9 simultaneous HLS video streams perfectly synced without lagging the React render cycle.
-* **Client-Side Edge AI Processing:** Leverages `requestVideoFrameCallback` and the Canvas 2D API to intercept raw video frames directly from the GPU render pipeline. It applies a hardware-accelerated privacy blur to simulate real-time ML object tracking without relying on expensive backend processing.
-* **Lazy Streaming (Intersection Observer):** Intelligently manages network and RAM by actively pausing network requests (`hls.stopLoad()`) when camera feeds scroll out of the viewport, and instantly resyncing them upon waking up.
+* **High-Performance History Player:** Bypasses DOM layout limits (reflow crashes) by rendering a continuous 24-hour virtualized timeline entirely on a `<canvas>`. Uses native pointer math to scrub massive datasets at a smooth 60 FPS.
+* **Client-Side Edge AI Processing:** Leverages `requestVideoFrameCallback` and the Canvas 2D API to intercept raw video frames directly from the GPU render pipeline. Applies a hardware-accelerated privacy blur to simulate real-time ML object tracking without relying on expensive backend cloud processing.
+* **Lazy Streaming (Intersection Observer):** Intelligently manages network and RAM by actively pausing network requests (`hls.stopLoad()`) when camera feeds scroll out of the viewport, instantly resyncing them upon waking up.
 * **Hardware-Accelerated Snapshots:** Extracts raw pixel data directly from the GPU, allowing users to export instant, high-resolution evidence frames without backend processing.
 * **Vocal Clarity Equalization:** Implements a custom Web Audio API routing graph (using `BiquadFilterNode` and `GainNode`) to filter out low-frequency background rumble and safely boost the presence of human speech.
 
@@ -19,20 +20,21 @@ This project demonstrates advanced browser resource management, complex state sy
 * **Video Engine:** HLS.js (Configured for low-latency and strict buffer limits)
 * **Styling:** Tailwind CSS, Lucide Icons
 * **Browser APIs Utilized:**
-  * `requestVideoFrameCallback` (Render Pipeline Hooking)
-  * `Canvas API` (Pixel Manipulation & Hardware Acceleration)
+  * `Canvas API` (Pixel Manipulation, Edge ML, & High-Performance UI Rendering)
+  * `requestVideoFrameCallback` (GPU Render Pipeline Hooking)
   * `Web Audio API` (Signal Routing & Equalization)
   * `IntersectionObserver` (Memory & Network Management)
   * `HTMLMediaElement` Native Events (Buffering State Management)
+  * `Pointer Events` (High-Precision Drag/Scrub Math)
 
 ## Architecture & Design Decisions
 
-To ensure scalability and maintainability, all complex business logic is strictly decoupled from the presentation layer using custom, strongly-typed React Hooks:
+To ensure scalability and maintainability, all complex business logic is strictly decoupled from the presentation layer using custom, strongly-typed React Hooks and specialized components:
 
+* `TimelineScrubber`: Prevents DOM bloat (which causes memory spikes) by mathematically calculating and painting thousands of timestamp ticks directly onto a single canvas element.
 * `useEdgeProcessor`: Manages the high-performance frame extraction loop and paints hardware-accelerated telemetry/filters to the canvas.
 * `useHlsStream`: Manages the initialization, lifecycle, and safe destruction of the HLS worker threads.
 * `useMediaEvents`: Hooks into native DOM events to provide accurate, localized buffering feedback without triggering global re-renders.
-* `useVisibility`: Tracks element viewport intersection to trigger sleep/wake states.
 * `useSnapshot`: Creates in-memory canvas contexts to safely handle cross-origin image extraction.
 * `useAudioEnhancer`: Builds and safely toggles a multi-node audio equalization graph.
 
