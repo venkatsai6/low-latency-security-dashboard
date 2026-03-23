@@ -117,11 +117,11 @@ src/
 
 ## Future Enhancements
 
-- [ ] **WebCodecs & WASM Integration:** Replace Canvas 2D frame extraction with WebCodecs API and WebAssembly for decoding raw MP4/H.265 streams at the byte level.
-- [ ] **Virtualization:** Implement windowing (e.g., react-window) for rendering 50+ camera nodes simultaneously.
-- [ ] **WebRTC Fallback:** Add WebRTC signaling for true sub-100ms latency real-time communication.
-- [ ] **Motion Detection Alerts:** Client-side motion detection with configurable sensitivity zones.
-- [ ] **Export & Reporting:** Generate PDF reports and video clips for incident documentation.
+* **WebCodecs & WASM Integration:** Replace Canvas 2D frame extraction with WebCodecs API and WebAssembly for decoding raw MP4/H.265 streams at the byte level.
+* **Virtualization:** Implement windowing (e.g., react-window) for rendering 50+ camera nodes simultaneously.
+* **WebRTC Fallback:** Add WebRTC signaling for true sub-100ms latency real-time communication.
+* **Motion Detection Alerts:** Client-side motion detection with configurable sensitivity zones.
+* **Export & Reporting:** Generate PDF reports and video clips for incident documentation.
 
 ## License
 
