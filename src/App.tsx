@@ -1,22 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Play, Pause, Grid2x2, Grid3x3, History, Video } from 'lucide-react';
-import { useDashboardStore } from './store/useDashboardStore';
+import { Play, Pause, Grid2x2, Grid3x3, History, Video, LayoutGrid, Square, Maximize2 } from 'lucide-react';
+import { useDashboardStore, ALL_CAMERAS } from './store/useDashboardStore';
 import { VideoFeed } from './components/VideoFeed';
 import { AiAnalysisModal } from './components/AiAnalysisModal';
 import { TimelineScrubber } from './components/TimelineScrubber';
-
-// Mock HLS Streams (Public test streams)
-const MOCK_CAMERAS = [
-  // Stream 1: Mux
-  { id: 'CAM-FRONT-DOOR', url: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' },
-  // Stream 2: Apple Basic Stream
-  { id: 'CAM-SERVER-ROOM', url: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_ts/master.m3u8' },
-  // Stream 3: Akamai
-  { id: 'CAM-PARKING', url: 'https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8' },
-  // Stream 4: Unified Streaming
-  { id: 'CAM-LOBBY', url: 'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8' },
-
-];
+import { Sidebar } from './components/Sidebar';
+import GridsView from './components/GridsView';
+import FavoritesView from './components/FavoritesView';
+import SitesView from './components/SitesView';
+import SettingsView from './components/SettingsView';
 
 function App() {
   const {
@@ -25,139 +17,184 @@ function App() {
     layoutGrid,
     setGlobalPaused,
     syncAllToTime,
-    setLayout
+    setLayout,
+    isDarkMode,
+    isSidebarCollapsed,
+    toggleSidebar,
+    activeSection
   } = useDashboardStore();
 
-  // Pull history state
   const isHistoryMode = useDashboardStore((state) => state.isHistoryMode);
   const toggleHistoryMode = useDashboardStore((state) => state.toggleHistoryMode);
 
-  // Local state for the slider to prevent UI lagging while dragging
   const [sliderValue, setSliderValue] = useState(0);
 
-  // Handle the scrubbing of the timeline
   const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const time = parseFloat(e.target.value);
     setSliderValue(time);
-    syncAllToTime(time); // Fire the update to all connected VideoFeeds
+    syncAllToTime(time);
   };
 
-  // Ensure local slider stays in sync if masterSeekTime changes elsewhere
   useEffect(() => {
     setSliderValue(masterSeekTime);
   }, [masterSeekTime]);
 
-  return (
-    <div className="min-h-screen bg-black text-white flex flex-col font-sans">
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
 
-      {/* --- Top Header --- */}
-      <header className="p-4 border-b border-neutral-800 flex justify-between items-center bg-neutral-950">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-white">Security Command Center</h1>
-          <p className="text-xs text-neutral-400">Low-Latency Synchronized Playback</p>
+  const gridOptions = [
+    { value: 1, icon: <Square size={18} />, label: '1x1' },
+    { value: 2, icon: <Grid2x2 size={18} />, label: '2x2' },
+    { value: 3, icon: <Grid3x3 size={18} />, label: '3x3' },
+    { value: 4, icon: <LayoutGrid size={18} />, label: '4x4' },
+  ] as const;
 
-          {/* Status Badge changes based on mode */}
-          <span className={`ml-4 px-2 py-0.5 rounded text-xs font-bold tracking-widest ${isHistoryMode ? 'bg-yellow-500/20 text-yellow-500' : 'bg-green-500/20 text-green-500'}`}>
-            {isHistoryMode ? 'HISTORY REPLAY' : 'SYSTEM ONLINE'}
-          </span>
-        </div>
-        <div className="flex gap-4">
-          {/* NEW: Toggle History Mode Button */}
-          <button
-            onClick={toggleHistoryMode}
-            className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md border transition-colors ${isHistoryMode
-              ? 'bg-yellow-500/10 border-yellow-500/50 text-yellow-500 hover:bg-yellow-500/20'
-              : 'border-neutral-700 bg-neutral-900 text-neutral-300 hover:bg-neutral-800 hover:text-white'
-              }`}
-          >
-            {isHistoryMode ? <Video size={16} /> : <History size={16} />}
-            {isHistoryMode ? 'Return to Live' : 'History Player'}
-          </button>
+  const getSectionTitle = () => {
+    switch (activeSection) {
+      case 'cameras': return 'All Cameras';
+      case 'grids': return 'Saved Grids';
+      case 'favorites': return 'Favorites';
+      case 'sites': return 'Sites';
+      case 'settings': return 'Settings';
+      default: return 'Dashboard';
+    }
+  };
 
-          <div className="flex bg-neutral-900 rounded-md p-1 border border-neutral-800">
-            <div className="flex gap-2">
-              <button
-                onClick={() => setLayout(2)}
-                className={`p-2 rounded transition-colors ${layoutGrid === 2 ? 'bg-blue-600 text-white' : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'}`}
-                title="2x2 Grid"
-              >
-                <Grid2x2 size={20} />
-              </button>
-              <button
-                onClick={() => setLayout(3)}
-                className={`p-2 rounded transition-colors ${layoutGrid === 3 ? 'bg-blue-600 text-white' : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'}`}
-                title="3x3 Grid"
-              >
-                <Grid3x3 size={20} />
-              </button>
+  const showCameraControls = activeSection === 'cameras' || activeSection === 'favorites';
+
+  const renderMainContent = () => {
+    switch (activeSection) {
+      case 'grids':
+        return <GridsView />;
+      case 'favorites':
+        return <FavoritesView />;
+      case 'sites':
+        return <SitesView />;
+      case 'settings':
+        return <SettingsView />;
+      case 'cameras':
+      default:
+        return (
+          <div className="p-4 overflow-auto h-full">
+            <div
+              className="grid gap-4"
+              style={{
+                gridTemplateColumns: `repeat(${layoutGrid}, minmax(0, 1fr))`
+              }}
+            >
+              {ALL_CAMERAS.slice(0, layoutGrid * layoutGrid).map((cam) => (
+                <VideoFeed key={cam.id} id={cam.id} url={cam.url} label={cam.name} location={cam.location} />
+              ))}
             </div>
           </div>
-        </div>
-        {/* Layout Toggles */}
+        );
+    }
+  };
 
-      </header>
+  return (
+    <div className="h-screen flex bg-white dark:bg-neutral-950">
+      <Sidebar isCollapsed={isSidebarCollapsed} onToggle={toggleSidebar} />
 
-      {/* --- Main Camera Grid --- */}
-      <main className="flex-1 p-4 overflow-hidden flex flex-col justify-center">
-        <div
-          className="grid gap-4 w-full max-w-7xl mx-auto"
-          style={{
-            gridTemplateColumns: `repeat(${layoutGrid}, minmax(0, 1fr))`
-          }}
-        >
-          {/* Dynamically render cameras based on layout (4 for 2x2, up to 9 for 3x3) */}
-          {MOCK_CAMERAS.slice(0, layoutGrid * layoutGrid).map((cam) => (
-            <VideoFeed key={cam.id} url={cam.url} label={cam.id} />
-          ))}
-        </div>
-      </main>
+      <div className="flex-1 flex flex-col bg-gray-50 dark:bg-neutral-900 text-gray-800 dark:text-gray-200 overflow-hidden">
+        <header className="px-6 py-4 border-b border-gray-200 dark:border-neutral-700 flex justify-between items-center bg-white dark:bg-neutral-950">
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-gray-50">{getSectionTitle()}</h1>
+              {activeSection === 'cameras' && (
+                <p className="text-xs text-gray-600 dark:text-gray-300">All Cameras • {ALL_CAMERAS.length} devices</p>
+              )}
+            </div>
+            {showCameraControls && (
+              <span className={`px-2.5 py-1 rounded text-xs font-bold tracking-wider ${isHistoryMode ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'}`}>
+                {isHistoryMode ? 'PLAYBACK' : 'LIVE'}
+              </span>
+            )}
+          </div>
 
-      {/* --- Global Transport Controls --- */}
-      <footer className="p-6 border-t border-neutral-800 bg-neutral-950 flex flex-col gap-4">
-        <div className="flex items-center gap-6 max-w-4xl mx-auto w-full">
-          {/* NEW: Render the Timeline only in History Mode */}
-          {isHistoryMode ? (
-            <TimelineScrubber />
-          ) : (
-            <div className="p-6 flex flex-col gap-4 w-full">
-              {/* Put your old transport controls (Play/Pause, Slider) in here! */}
-              <div className="flex items-center gap-4 max-w-2xl mx-auto w-full">
-                <button
-                  onClick={() => setGlobalPaused(!isGlobalPaused)}
-                  className="w-12 h-12 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors shadow-lg shadow-blue-900/20"
-                >
-                  {/* Master Play/Pause */}
+          {showCameraControls && (
+            <div className="flex items-center gap-3">
+              <button
+                onClick={toggleHistoryMode}
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                  isHistoryMode
+                    ? 'bg-amber-100 border-amber-300 text-amber-800 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/50'
+                    : 'border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-neutral-700'
+                }`}
+              >
+                {isHistoryMode ? <Video size={16} /> : <History size={16} />}
+                {isHistoryMode ? 'Return to Live' : 'History'}
+              </button>
+
+              <div className="flex bg-gray-100 dark:bg-neutral-800 rounded-lg p-1 border border-gray-200 dark:border-neutral-700">
+                {gridOptions.map((option) => (
                   <button
-                    onClick={() => setGlobalPaused(!isGlobalPaused)}
-                    className="w-14 h-14 flex shrink-0 items-center justify-center bg-white text-black rounded-full hover:bg-gray-200 transition-transform active:scale-95"
+                    key={option.value}
+                    onClick={() => setLayout(option.value)}
+                    className={`p-2 rounded-md transition-colors ${
+                      layoutGrid === option.value
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-neutral-700 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                    title={`${option.label} Grid`}
                   >
-                    {isGlobalPaused ? <Play fill="currentColor" size={24} className="ml-1" /> : <Pause fill="currentColor" size={24} />}
+                    {option.icon}
                   </button>
-                </button>
-                {/* Master Timeline */}
-                <div className="flex-1 flex flex-col gap-2">
-                  <div className="flex justify-between text-xs text-neutral-400 font-mono">
-                    <span>SYNC TIMELINE (SECONDS)</span>
-                    <span className="text-white bg-neutral-800 px-2 py-1 rounded">
-                      T- {sliderValue.toFixed(1)}s
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="60" // Mocking a 60-second recorded buffer
-                    step="0.1"
-                    value={sliderValue}
-                    onChange={handleSeekChange}
-                    className="w-full h-2 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                  />
-                </div>
+                ))}
               </div>
+
+              <button className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-neutral-700 rounded-lg transition-colors" title="Fullscreen">
+                <Maximize2 size={18} />
+              </button>
             </div>
           )}
-        </div>
-      </footer>
-      {/* NEW: The Modal Layer */}
+        </header>
+
+        <main className="flex-1 overflow-hidden bg-gray-100 dark:bg-neutral-900">
+          {renderMainContent()}
+        </main>
+
+        {showCameraControls && (
+          <footer className="border-t border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-950">
+            {isHistoryMode ? (
+              <TimelineScrubber />
+            ) : (
+              <div className="p-4">
+                <div className="flex items-center gap-4 max-w-2xl mx-auto">
+                  <button
+                    onClick={() => setGlobalPaused(!isGlobalPaused)}
+                    className="w-12 h-12 flex shrink-0 items-center justify-center bg-blue-600 dark:bg-white text-white dark:text-black rounded-full hover:bg-blue-700 dark:hover:bg-gray-200 transition-transform active:scale-95"
+                  >
+                    {isGlobalPaused ? <Play fill="currentColor" size={20} className="ml-0.5" /> : <Pause fill="currentColor" size={20} />}
+                  </button>
+                  <div className="flex-1 flex flex-col gap-2">
+                    <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300 font-mono">
+                      <span>SYNC TIMELINE</span>
+                      <span className="text-gray-800 dark:text-gray-100 bg-gray-200 dark:bg-neutral-700 px-2 py-0.5 rounded text-[10px]">
+                        T-{sliderValue.toFixed(1)}s
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="60"
+                      step="0.1"
+                      value={sliderValue}
+                      onChange={handleSeekChange}
+                      className="w-full h-1.5 bg-gray-300 dark:bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </footer>
+        )}
+      </div>
+
       <AiAnalysisModal />
     </div>
   );

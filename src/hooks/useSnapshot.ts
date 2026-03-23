@@ -1,13 +1,10 @@
 import { useCallback, type RefObject } from 'react';
 
-// FIX: Added " | null" to the type definition
 export const useSnapshot = (videoRef: RefObject<HTMLVideoElement | null>, label: string) => {
-  
+
   const takeSnapshot = useCallback(() => {
     const video = videoRef.current;
-    
-    // Because we accepted null above, this safety check below 
-    // now perfectly satisfies TypeScript's strict rules!
+
     if (!video) return;
 
     if (video.videoWidth === 0 || video.videoHeight === 0) {

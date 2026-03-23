@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Loader2, EyeOff, Camera, Volume2, VolumeX, SlidersHorizontal, Cpu } from 'lucide-react';
+import { Loader2, EyeOff, Camera, Volume2, VolumeX, SlidersHorizontal, Cpu, Star } from 'lucide-react';
 import { useDashboardStore } from '../store/useDashboardStore';
 import { useHlsStream } from '../hooks/useHlsStream';
 import { useMediaEvents } from '../hooks/useMediaEvents';
@@ -8,33 +8,31 @@ import { useSnapshot } from '../hooks/useSnapshot';
 import { useAudioEnhancer } from '../hooks/useAudioEnhancer';
 
 interface Props {
+  id?: string;
   url: string;
   label: string;
+  location?: string;
 }
 
-export const VideoFeed: React.FC<Props> = ({ url, label }) => {
-  // We attach this ref to the wrapper div, not just the video, 
-  // so we can detect when the container itself is visible.
+export const VideoFeed: React.FC<Props> = ({ id, url, label, location }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const isGlobalPaused = useDashboardStore((state) => state.isGlobalPaused);
   const masterSeekTime = useDashboardStore((state) => state.masterSeekTime);
-  // 1. Import getExpectedTime at the top of your component (if you haven't already)
   const getExpectedTime = useDashboardStore((state) => state.getExpectedTime);
+  const toggleFavorite = useDashboardStore((state) => state.toggleFavorite);
+  const favorites = useDashboardStore((state) => state.favorites);
+  const showCameraLabels = useDashboardStore((state) => state.settings.showCameraLabels);
+  
+  const isFavorite = id ? favorites.includes(id) : false;
 
-
-  // Hook Executions
   const isVisible = useVisibility(containerRef);
   useHlsStream({ url, videoRef, isVisible });
   const { isBuffering } = useMediaEvents(videoRef);
-  // Initialize the Snapshot Hook
   const { takeSnapshot } = useSnapshot(videoRef, label);
-  // Initialize the Audio Enhancer Hook
   const { isEnhanced, isMuted, toggleMute, toggleEnhance } = useAudioEnhancer(videoRef);
 
-  // ... [keep the useHlsStream and useMediaEvents hooks as they are] ...
-  // 2. Play/Pause & Wake-up Catch-Up Sync
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !isVisible) return;
@@ -42,7 +40,6 @@ export const VideoFeed: React.FC<Props> = ({ url, label }) => {
     if (isGlobalPaused) {
       video.pause();
     } else {
-      // WAKE UP LOGIC: Jump to the correct live time
       const expectedTime = getExpectedTime();
       if (Math.abs(video.currentTime - expectedTime) > 0.5) {
         video.currentTime = expectedTime;
@@ -50,22 +47,21 @@ export const VideoFeed: React.FC<Props> = ({ url, label }) => {
 
       const playPromise = video.play();
       if (playPromise !== undefined) {
-        playPromise.catch(() => { /* safely ignore interruption errors */ });
+        playPromise.catch(() => {});
       }
     }
-  }, [isGlobalPaused, isVisible]); // <--- isVisible stays here to trigger the wake-up
+  }, [isGlobalPaused, isVisible]);
 
-  // 3. Manual Scrubbing Sync (THE FIX)
   useEffect(() => {
-    // We removed !isVisible here so it can seek even in the background if needed
     if (!videoRef.current) return;
 
     const drift = Math.abs(videoRef.current.currentTime - masterSeekTime);
     if (drift > 0.5) {
       videoRef.current.currentTime = masterSeekTime;
     }
-  }, [masterSeekTime]); // <--- FIX: Removed isVisible. Now it only fires when you drag the slider!
+  }, [masterSeekTime]);
   const setAnalysisCamera = useDashboardStore((state) => state.setAnalysisCamera);
+  
   return (
     <div
       ref={containerRef}
@@ -80,25 +76,43 @@ export const VideoFeed: React.FC<Props> = ({ url, label }) => {
       />
 
       <div className="absolute top-0 left-0 p-2 w-full bg-linear-to-b from-black/70 to-transparent z-10">
-        <span className="text-xs font-mono text-white flex items-center gap-2">
-          {isVisible ? (
-            <span className={`w-2 h-2 rounded-full ${isBuffering ? 'bg-yellow-500' : 'bg-red-600 animate-pulse'}`} />
-          ) : (
-            <EyeOff size={12} className="text-neutral-400" />
+        <div className="flex items-start justify-between">
+          <div>
+            {showCameraLabels && (
+              <span className="text-xs font-mono text-white flex items-center gap-2">
+                {isVisible ? (
+                  <span className={`w-2 h-2 rounded-full ${isBuffering ? 'bg-yellow-500' : 'bg-red-600 animate-pulse'}`} />
+                ) : (
+                  <EyeOff size={12} className="text-neutral-400" />
+                )}
+                {label} {isVisible ? (isBuffering ? '• BUFFERING' : '• LIVE') : '• STANDBY'}
+                {!isMuted && (
+                  <span className="ml-2 px-1.5 py-0.5 bg-blue-600 rounded text-[10px] font-bold">
+                    AUDIO ON
+                  </span>
+                )}
+              </span>
+            )}
+            {showCameraLabels && location && (
+              <span className="text-[10px] text-neutral-300 mt-0.5 block">{location}</span>
+            )}
+          </div>
+          {id && (
+            <button
+              onClick={() => toggleFavorite(id)}
+              className={`p-1.5 rounded transition-colors ${
+                isFavorite
+                  ? 'text-yellow-400'
+                  : 'text-white/50 hover:text-yellow-400 opacity-0 group-hover:opacity-100'
+              }`}
+              title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <Star size={16} fill={isFavorite ? 'currentColor' : 'none'} />
+            </button>
           )}
-          {label} {isVisible ? (isBuffering ? '• BUFFERING' : '• LIVE') : '• STANDBY'}
-          {/* Audio Indicator */}
-          {/* Updated Status Indicator */}
-          {!isMuted && (
-            <span className="ml-2 px-1.5 py-0.5 bg-blue-600 rounded text-[10px] font-bold">
-              AUDIO ON
-            </span>
-          )}
-        </span>
-        {/* The Snapshot Button - Only visible on group hover */}
+        </div>
         {isVisible && !isBuffering && (
-          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
-            {/* NEW: Master Volume Button */}
+          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200 mt-2">
             <button
               onClick={toggleMute}
               className={`p-1.5 rounded transition-colors ${!isMuted ? 'bg-blue-600 text-white' : 'bg-black/50 hover:bg-neutral-700 text-white'}`}
@@ -106,8 +120,6 @@ export const VideoFeed: React.FC<Props> = ({ url, label }) => {
             >
               {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
             </button>
-
-            {/* EQ Enhancement Button (Only visible if unmuted) */}
             {!isMuted && (
               <button
                 onClick={toggleEnhance}
@@ -117,7 +129,6 @@ export const VideoFeed: React.FC<Props> = ({ url, label }) => {
                 <SlidersHorizontal size={16} />
               </button>
             )}
-            {/* NEW: AI Analysis Button */}
             <button
               onClick={() => setAnalysisCamera({ id: label, url: url })}
               className="p-1.5 bg-black/50 hover:bg-purple-600 text-white rounded transition-colors flex items-center gap-1"
@@ -127,7 +138,7 @@ export const VideoFeed: React.FC<Props> = ({ url, label }) => {
             </button>
             <button
               onClick={takeSnapshot}
-              className="p-1.5 bg-black/50 hover:bg-blue-600 text-white rounded opacity-0 group-hover:opacity-100 transition-all duration-200"
+              className="p-1.5 bg-black/50 hover:bg-blue-600 text-white rounded transition-all duration-200"
               title="Export Snapshot"
             >
               <Camera size={16} />
@@ -144,3 +155,5 @@ export const VideoFeed: React.FC<Props> = ({ url, label }) => {
     </div>
   );
 };
+
+export default VideoFeed;

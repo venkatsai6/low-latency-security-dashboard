@@ -7,15 +7,14 @@ export const useVisibility = (ref: MutableRefObject<HTMLElement | null>) => {
     const target = ref.current;
     if (!target) return;
 
-    // The observer fires whenever the target enters or leaves the viewport
     const observer = new IntersectionObserver(
       ([entry]) => {
         setIsVisible(entry.isIntersecting);
       },
       {
-        root: null, // relative to the viewport
+        root: null,
         rootMargin: '0px',
-        threshold: 0.1, // triggers when at least 10% of the video is visible
+        threshold: 0.1,
       }
     );
 

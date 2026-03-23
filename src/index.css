@@ -1,73 +1,152 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+}
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* WCAG AA Compliant Light Theme */
+  --text: #1f2937;           /* gray-800: 12.6:1 on white */
+  --text-secondary: #4b5563; /* gray-600: 7:1 on white */
+  --text-muted: #6b7280;     /* gray-500: 4.6:1 on white (AA compliant) */
+  --text-h: #111827;         /* gray-900: 16:1 on white */
+  --bg: #ffffff;
+  --bg-secondary: #f3f4f6;   /* gray-100 */
+  --border: #d1d5db;         /* gray-300 */
+  --accent: #2563eb;         /* blue-600: 4.5:1 on white */
+  --accent-hover: #1d4ed8;   /* blue-700 */
+  --accent-bg: rgba(37, 99, 235, 0.1);
 
-  --sans: 'Michroma',system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: 'Michroma', system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: 'Michroma', ui-monospace, Consolas, monospace;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Consolas, monospace;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
+  font: 14px/1.5 var(--font-sans);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+.dark {
+  /* WCAG AA Compliant Dark Theme */
+  --text: #e5e7eb;           /* gray-200: 13.5:1 on #0a0a0a */
+  --text-secondary: #d1d5db; /* gray-300: 11:1 on dark bg */
+  --text-muted: #9ca3af;     /* gray-400: 7:1 on dark bg */
+  --text-h: #f9fafb;         /* gray-50: 18:1 on dark bg */
+  --bg: #0a0a0a;
+  --bg-secondary: #171717;   /* neutral-900 */
+  --border: #404040;         /* neutral-700 */
+  --accent: #60a5fa;         /* blue-400: 8.6:1 on dark bg */
+  --accent-hover: #93c5fd;   /* blue-300 */
+  --accent-bg: rgba(96, 165, 250, 0.15);
 }
 
-.michroma-regular {
-  font-family: "Michroma", sans-serif;
-  font-weight: 400;
-  font-style: normal;
+html {
+  background: var(--bg);
+  color: var(--text);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
-.mulish-italic-200 {
-  font-family: "Mulish", sans-serif;
-  font-weight: 200;
-  font-style: italic;
+
+body {
+  background: var(--bg);
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  background: #d1d5db;
+  height: 6px;
+  border-radius: 3px;
+}
+
+.dark input[type="range"]::-webkit-slider-runnable-track {
+  background: #262626;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #3b82f6;
+  margin-top: -4px;
+  border: 2px solid #1d4ed8;
+}
+
+input[type="range"]::-moz-range-track {
+  background: #d1d5db;
+  height: 6px;
+  border-radius: 3px;
+}
+
+.dark input[type="range"]::-moz-range-track {
+  background: #262626;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #3b82f6;
+  border: 2px solid #1d4ed8;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #171717;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #9ca3af;
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #404040;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #525252;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
 }
 
 #root {
   max-width: 100%;
   margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
   min-height: 100svh;
   display: flex;
   flex-direction: column;
@@ -76,48 +155,39 @@
 
 body {
   margin: 0;
+  color: var(--text);
 }
 
 h1,
 h2 {
-  font-family: var(--heading);
-  font-weight: 500;
+  font-family: var(--font-sans);
+  font-weight: 600;
   color: var(--text-h);
 }
 
 h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+  font-size: 2rem;
+  letter-spacing: -0.025em;
+  margin: 1rem 0;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+h2 {
+  font-size: 1.25rem;
+  line-height: 1.4;
+  margin: 0 0 0.5rem;
+}
+
+p {
+  margin: 0;
+  color: var(--text);
 }
 
 code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  color: var(--text-h);
+  background: var(--bg-secondary);
 }

@@ -10,16 +10,13 @@ export const TimelineScrubber: React.FC = () => {
   
   const [isDragging, setIsDragging] = useState(false);
   
-  // Configuration for the timeline rendering
-  const pixelsPerSecond = 5; // How spread out the timeline is
-  
-  // 1. The Core Render Engine
+  const pixelsPerSecond = 5;
+
   const drawTimeline = useCallback(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
     if (!canvas || !container) return;
 
-    // Fix for high-DPI (Retina) displays to prevent blurriness
     const dpr = window.devicePixelRatio || 1;
     const rect = container.getBoundingClientRect();
     
@@ -32,32 +29,26 @@ export const TimelineScrubber: React.FC = () => {
     ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, rect.width, rect.height);
 
-    // Center point of the canvas is our "Current Playhead"
     const centerX = rect.width / 2;
 
     ctx.fillStyle = '#a3a3a3'; // Neutral-400
     ctx.font = '10px monospace';
     ctx.textAlign = 'center';
 
-    // Calculate how many seconds fit on the screen
     const visibleSeconds = rect.width / pixelsPerSecond;
     const startSecond = masterSeekTime - (visibleSeconds / 2);
     const endSecond = masterSeekTime + (visibleSeconds / 2);
 
-    // Draw the ticks
     for (let i = Math.floor(startSecond); i <= Math.ceil(endSecond); i++) {
-      // Only draw ticks every 10 seconds to avoid crowding
       if (i % 10 === 0) {
         const xPos = centerX + ((i - masterSeekTime) * pixelsPerSecond);
-        
-        // Major tick every 60 seconds (1 minute)
+
         const isMinute = i % 60 === 0;
         const tickHeight = isMinute ? 20 : 10;
         
         ctx.fillStyle = isMinute ? '#ffffff' : '#525252';
         ctx.fillRect(xPos - 1, rect.height - tickHeight, 2, tickHeight);
 
-        // Draw timestamp on the minutes
         if (isMinute) {
           const minutes = Math.floor((Math.abs(i) % 3600) / 60);
           const seconds = Math.abs(i) % 60;
@@ -67,31 +58,26 @@ export const TimelineScrubber: React.FC = () => {
       }
     }
 
-    // Draw the center Playhead (Red Line)
-    ctx.fillStyle = '#ef4444'; // Red-500
+    ctx.fillStyle = '#ef4444';
     ctx.fillRect(centerX - 1, 0, 2, rect.height);
 
   }, [masterSeekTime, pixelsPerSecond]);
 
-  // Re-draw when time changes or window resizes
   useEffect(() => {
     drawTimeline();
     window.addEventListener('resize', drawTimeline);
     return () => window.removeEventListener('resize', drawTimeline);
   }, [drawTimeline]);
 
-  // 2. Mouse Drag Logic to scrub time
   const handlePointerDown = () => setIsDragging(true);
-  
+
   const handlePointerUp = () => setIsDragging(false);
-  
+
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!isDragging) return;
-    // If user drags mouse left (negative movement), time moves forward
-    const movementX = e.movementX; 
+    const movementX = e.movementX;
     const timeChange = -(movementX / pixelsPerSecond);
-    
-    // Prevent scrolling into negative time
+
     const newTime = Math.max(0, masterSeekTime + timeChange);
     syncAllToTime(newTime);
   };
