@@ -122,7 +122,3 @@ src/
 * **WebRTC Fallback:** Add WebRTC signaling for true sub-100ms latency real-time communication.
 * **Motion Detection Alerts:** Client-side motion detection with configurable sensitivity zones.
 * **Export & Reporting:** Generate PDF reports and video clips for incident documentation.
-
-## License
-
-MIT
